@@ -319,10 +319,18 @@ public sealed partial class RulesEngine
     [GeneratedRegex(@"\b(i can see|i see|i heard|i can hear|the document shows|the measurement confirms)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex FalsePerceptualAttributionRegex();
 
-    [GeneratedRegex(@"\b(superseded|obsolete|replaced)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    // Both of the following require an actual marking, not a passing mention. "Update the stale
+    // v1.1 block" describes staleness; it does not declare the item itself stale. Matching a bare
+    // occurrence made these rules fire on any capsule that discussed its own hygiene, which is the
+    // same prose-versus-metadata confusion that produced the promotion false positives.
+    [GeneratedRegex(
+        @"\b(?:marked|flagged|status|state|is|are|was|were|now|considered|deemed)\s+(?:as\s+)?(?:superseded|obsolete)\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex SupersededRegex();
 
-    [GeneratedRegex(@"\b(stale|expired|expires?\s+(?:on\s+)?\d{4}-\d{2}-\d{2})\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    [GeneratedRegex(
+        @"\b(?:(?:marked|flagged|status|state|is|are|was|were|now|considered|deemed)\s+(?:as\s+)?(?:stale|expired)|expire[sd]?\s+(?:on\s+)?\d{4}-\d{2}-\d{2})\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex StaleRegex();
 
     [GeneratedRegex(@"\b(maybe|perhaps|appears?|seems?|likely|unlikely|might|could|possibly|assum(?:e|ed|ption)|hypothes(?:is|ize|ized)|preliminary|tentative)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]

@@ -536,4 +536,53 @@ public sealed class RulesEngineTests
 
         Assert.DoesNotContain(findings, finding => finding.Rule == "low-confidence-state-promotion");
     }
+
+    /// <summary>
+    /// Describing staleness is not being stale. A capsule that plans to replace an outdated
+    /// artifact was flagged as outdated itself, which is the prose-versus-metadata confusion that
+    /// also produced the promotion false positives.
+    /// </summary>
+    [Theory]
+    [InlineData("Update the stale v1.1 schema block in the project instructions.")]
+    [InlineData("Replace the expired certificate reference in the deployment guide.")]
+    [InlineData("Document why the superseded workflow was retired.")]
+    [InlineData("Remove the obsolete build script.")]
+    public void DoesNotFlagItemsThatMerelyDiscussStaleOrSupersededMaterial(string claim)
+    {
+        var capsule = new JsonObject
+        {
+            ["next_actions"] = new JsonArray(new JsonObject
+            {
+                ["text"] = claim,
+                ["authority"] = "operational-guidance",
+            }),
+        };
+
+        var findings = new RulesEngine().Check(capsule, new DateOnly(2026, 9, 1));
+
+        Assert.DoesNotContain(findings, finding => finding.Rule == "stale-or-expired-item");
+        Assert.DoesNotContain(findings, finding => finding.Rule == "superseded-item-active");
+    }
+
+    /// <summary>An item that actually declares itself stale or superseded in prose still trips.</summary>
+    [Theory]
+    [InlineData("This constraint is stale and needs review.", "stale-or-expired-item")]
+    [InlineData("The credential expired on 2026-08-01.", "stale-or-expired-item")]
+    [InlineData("This approach is now superseded.", "superseded-item-active")]
+    [InlineData("The prior decision was marked obsolete.", "superseded-item-active")]
+    public void StillFlagsItemsThatDeclareThemselvesStaleOrSuperseded(string claim, string rule)
+    {
+        var capsule = new JsonObject
+        {
+            ["constraints"] = new JsonArray(new JsonObject
+            {
+                ["text"] = claim,
+                ["authority"] = "operational-requirement",
+            }),
+        };
+
+        var findings = new RulesEngine().Check(capsule, new DateOnly(2026, 9, 1));
+
+        Assert.Contains(findings, finding => finding.Rule == rule);
+    }
 }

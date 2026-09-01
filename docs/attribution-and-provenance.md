@@ -26,7 +26,7 @@ A citable DOI for the v1.2.0 release is minted through Zenodo at publication tim
 
 ## Document hashes
 
-SHA-256 hashes of the v1.2.0 release documents as published. These let any third party
+SHA-256 hashes of the v1.2.1 release documents as published. These let any third party
 verify that a copy of the specification or training file is unmodified. Recompute with
 `sha256sum <file>` (or `shasum -a 256 <file>` on macOS).
 
@@ -34,8 +34,8 @@ verify that a copy of the specification or training file is unmodified. Recomput
 | --- | --- |
 | `NOTICE` | `a4cb1f7e34223c2163b035f953a6b8229177f6c0e6f8ba90efb84a4f53a3d5b8` |
 | `LICENSE-DOCS` | `82bc72c3e295182f69002f18a84e1dd5024358cf9415be7440b607c4d36e519d` |
-| `CITATION.cff` | `0b8b2ac632d5e32d1ab58d83fa1b6dfed58eeeb5e8027ba3a8b68ea3d95ff9d7` |
-| `CHANGELOG.md` | `627b012b2a3e514721878385af8d6fbd0d8786591e830b3dfbc16da6f915efd5` |
+| `CITATION.cff` | `fbbdbb787ed3d52de02047253f40709a3aacfc9f388bcefcec0d72af213e2bb6` |
+| `CHANGELOG.md` | `b3a3bffb52c0d44b506cac359ac242165975c2e94cbbd86149b61bd9607dd647` |
 | `README.md` | `cbb22a7ab3f70ac428382a155397d2856f0b6152f800c60649d4e3bd5449a23a` |
 | `docs/specification.md` | `803721c2fb86344a1e9977c48ecfc469f8b669238915a1d8ec00f4179ef6ec43` |
 | `docs/context-integrity.md` | `f60e79f3cf4f4831202dff8450a0b42330b8e227a11ecb6a4cbf5c5b8cefc580` |
@@ -47,8 +47,10 @@ verify that a copy of the specification or training file is unmodified. Recomput
 | `examples/Watts_Protocol_Training_v1.2_minified.json` | `2a509339ba6633daf4b8154f609c89e0772bf5696cc9e60248d5a056997ce980` |
 | `examples/bootstrap-capsule.json` | `f795d701c51d14960939169bf69d1e69d45cdedb6fd99eaf209b2e0cb0b9a226` |
 
-This file is excluded from its own table. Hashes below are for the published v1.2.0
-release, including the minted Zenodo DOI (10.5281/zenodo.22224272).
+This file is excluded from its own table. Hashes above are for the v1.2.1 release.
+The v1.2.0 hashes remain retrievable from the v1.2.0 tag and from the archive deposited
+under version DOI 10.5281/zenodo.22224272. Concept DOI 10.5281/zenodo.22224271 resolves
+to all versions.
 
 ## Provenance and state
 

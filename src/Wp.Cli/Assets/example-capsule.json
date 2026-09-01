@@ -1,0 +1,50 @@
+{
+  "session_name": "example-release-session",
+  "project_name": "watts-protocol",
+  "active_objective": "Prepare a governed public release.",
+  "key_facts": [
+    {
+      "text": "Watts-Protocol™ v1.2 is the Generally Accepted 1.x baseline.",
+      "state_type": "verified_fact",
+      "confidence": "high",
+      "source": "bundled-training-v1.2"
+    }
+  ],
+  "documents_reviewed": [
+    {
+      "text": "Watts-Protocol™ Overview & Definition, July 2026.",
+      "state_type": "source_document",
+      "verification_status": "reviewed"
+    }
+  ],
+  "decisions_made": [
+    {
+      "text": "Use YAML or JSON for portable Memory Capsules.",
+      "authority": "settled_decision",
+      "source": "Watts-Protocol-v1.2"
+    }
+  ],
+  "constraints": [
+    {
+      "text": "Do not promote contextual state beyond its evidentiary basis.",
+      "authority": "core-principle"
+    }
+  ],
+  "open_questions": [],
+  "risks": [
+    {
+      "text": "Low-confidence state can be promoted without sufficient validation.",
+      "state_type": "risk",
+      "source": "Watts-Protocol-v1.2"
+    }
+  ],
+  "next_actions": [
+    {
+      "text": "Run wp check before transferring a capsule.",
+      "authority": "operational-guidance"
+    }
+  ],
+  "changelog": [
+    "v1.2: Initial bundled example."
+  ]
+}

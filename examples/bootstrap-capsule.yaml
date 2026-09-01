@@ -1,0 +1,33 @@
+session_name: watts-protocol-v1.2-bootstrap-example
+project_name: Watts-Protocol™
+active_objective: Continue the active task with minimum sufficient governed context.
+key_facts:
+  - value: Watts-Protocol™ v1.2 is the Generally Accepted 1.x baseline.
+    source: v1.2 specification
+    state_type: verified_fact
+    confidence: high
+    verification_status: established
+    supersession_status: active
+  - value: v2.x is exploratory and non-normative.
+    source: v1.2 specification
+    state_type: verified_fact
+    confidence: high
+    verification_status: established
+    supersession_status: active
+documents_reviewed:
+  - Watts-Protocol™ v1.2 specification
+decisions_made:
+  - Current explicit human instruction may supersede stale historical context.
+  - Settled decisions remain active until changed by the human, materially invalidated by new evidence, or explicitly reviewed.
+constraints:
+  - Preserve evidence-state distinctions.
+  - Do not invent missing facts.
+  - Expand context only when the active task requires it.
+open_questions: []
+risks:
+  - Context bloat can reduce working-context reliability.
+  - Low-confidence state promotion can cause EGS-Drift.
+next_actions:
+  - Perform the active task using this capsule.
+changelog:
+  - v1.2: bootstrap with compact authoritative state and load only what is needed.

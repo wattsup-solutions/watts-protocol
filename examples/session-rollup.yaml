@@ -1,0 +1,26 @@
+session_name: watts-protocol-v1.2-recovery-rollup
+project_name: Watts-Protocol™
+active_objective: Restore context integrity and continue coherent work.
+key_facts:
+  - value: Context integrity is restored by identifying authoritative state and preserving evidence-state distinctions.
+    state_type: verified_fact
+    confidence: high
+    verification_status: established
+documents_reviewed:
+  - Watts-Protocol™ v1.2 specification
+decisions_made:
+  - Stop unnecessary context expansion before restarting work.
+  - Remove duplicated or superseded context from active state.
+constraints:
+  - Do not convert assumptions or preliminary observations into verified facts without sufficient evidence.
+  - Preserve unresolved questions, risks, and next actions.
+open_questions:
+  - Which additional source or historical context is necessary for the active task?
+risks:
+  - Reopening settled decisions can indicate degradation.
+  - Expected evidence can be confused with evidence actually received.
+next_actions:
+  - Bootstrap a clean session from this compact rollup.
+  - Load deeper context only if the active task requires it.
+changelog:
+  - Recovery rollup created to preserve governed state without exhaustive conversation history.

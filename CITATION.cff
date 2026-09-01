@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use Watts-Protocol™, please cite it as below."
+title: "Watts-Protocol™"
+type: software
+version: 1.2.0
+date-released: 2026-09-01
+authors:
+  - family-names: Watts
+    given-names: Douglas
+    orcid: "https://orcid.org/0009-0003-6741-4494"
+    affiliation: "WattsUp Solutions, Inc."
+license: Apache-2.0
+url: "https://protocol.wattsupsolutions.com"
+repository-code: "https://github.com/wattsup-solutions/watts-protocol"
+doi: "10.5281/zenodo.22224272"
+abstract: "A context governance and continuity framework for capturing, curating, transporting, and restoring durable working state across human-AI and AI-mediated collaboration."
+keywords:
+  - context governance
+  - human-AI collaboration
+  - Memory Capsules
+  - context integrity

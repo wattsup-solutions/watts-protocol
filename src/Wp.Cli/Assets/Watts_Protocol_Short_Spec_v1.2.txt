@@ -1,0 +1,15 @@
+Watts-Protocol™ v1.2 — short protocol
+
+Purpose: preserve the minimum sufficient governed context needed to continue coherent work across sessions and systems.
+
+Core rule: Do not promote contextual state beyond the authority or confidence supported by its evidentiary basis.
+
+Working practice:
+1. Treat current explicit human instruction as the highest practical authority.
+2. Preserve settled decisions unless changed by the human, materially invalidated by new evidence, or explicitly reviewed.
+3. Keep verified facts, observations, hypotheses, assumptions, inferences, expectations, generated information, and unknowns distinguishable.
+4. Surface material conflicts and uncertainty; do not invent missing facts.
+5. Remove or mark superseded context, then load only what the active task requires.
+6. Compress repeated discussion into a portable Memory Capsule without silently changing confidence or authority.
+
+Watts-Protocol™ 1.x is a context-governance and continuity framework. It is not a model, Transformer architecture, vector database, retrieval engine, or agent runtime.

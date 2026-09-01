@@ -32,7 +32,7 @@ public static class Program
         app.Configure(config =>
         {
             config.SetApplicationName("wp");
-            config.SetApplicationVersion("1.2.0");
+            config.SetApplicationVersion("1.2.1");
             config.AddCommand<InitCommand>("init")
                 .WithDescription("Create a new Watts-Protocol Memory Capsule.");
             config.AddCommand<BootstrapCommand>("bootstrap")

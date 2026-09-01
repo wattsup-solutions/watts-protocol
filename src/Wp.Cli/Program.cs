@@ -1,6 +1,7 @@
 // Licensed under the Apache License, Version 2.0.
 // Copyright 2026 WattsUp Solutions, Inc.
 
+using System.Text;
 using Spectre.Console.Cli;
 
 namespace WattsProtocol.Cli;
@@ -13,6 +14,20 @@ public static class Program
     /// <returns>A process exit code.</returns>
     public static int Main(string[] args)
     {
+        // The trademark symbol in Watts-Protocol™ renders as a replacement character on
+        // consoles that are not already UTF-8 (notably the default Windows code page 437/1252).
+        // Setting the output encoding explicitly makes wp render identically everywhere.
+        // Guarded because the setter throws IOException when stdout is redirected to a
+        // handle that does not support encoding changes.
+        try
+        {
+            Console.OutputEncoding = Encoding.UTF8;
+        }
+        catch (IOException)
+        {
+            // Non-fatal: fall back to the host console's default encoding.
+        }
+
         var app = new CommandApp();
         app.Configure(config =>
         {

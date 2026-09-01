@@ -6,17 +6,15 @@ The tool is built for .NET 9 and uses [Spectre.Console.Cli](https://spectreconso
 
 ## Build and test
 
-The repository includes its SDK under `/home/user/workspace/.dotnet`. Export the SDK environment before every `dotnet` command:
+Requires the [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0). From the repository root:
 
 ```bash
-export DOTNET_ROOT=/home/user/workspace/.dotnet
-export PATH=$PATH:/home/user/workspace/.dotnet
-export DOTNET_CLI_TELEMETRY_OPTOUT=1
-
-dotnet restore src/wp.sln
-dotnet build src/wp.sln
-dotnet test src/wp.sln
+dotnet restore
+dotnet build
+dotnet test
 ```
+
+`watts-protocol.sln` at the repository root ties `src/Wp.Cli` and `tests/Wp.Cli.Tests` together, so the bare commands above work from a fresh clone with no arguments.
 
 Run from source:
 

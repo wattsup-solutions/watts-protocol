@@ -34,7 +34,7 @@ verify that a copy of the specification or training file is unmodified. Recomput
 | --- | --- |
 | `NOTICE` | `a4cb1f7e34223c2163b035f953a6b8229177f6c0e6f8ba90efb84a4f53a3d5b8` |
 | `LICENSE-DOCS` | `82bc72c3e295182f69002f18a84e1dd5024358cf9415be7440b607c4d36e519d` |
-| `CITATION.cff` | `fbbdbb787ed3d52de02047253f40709a3aacfc9f388bcefcec0d72af213e2bb6` |
+| `CITATION.cff` | `fbddc4f857807dd103c675460e4fe98d4f93fabcb030c980483b973bd0a4fe0e` |
 | `CHANGELOG.md` | `b3a3bffb52c0d44b506cac359ac242165975c2e94cbbd86149b61bd9607dd647` |
 | `README.md` | `cbb22a7ab3f70ac428382a155397d2856f0b6152f800c60649d4e3bd5449a23a` |
 | `docs/specification.md` | `803721c2fb86344a1e9977c48ecfc469f8b669238915a1d8ec00f4179ef6ec43` |
@@ -49,8 +49,9 @@ verify that a copy of the specification or training file is unmodified. Recomput
 
 This file is excluded from its own table. Hashes above are for the v1.2.1 release.
 The v1.2.0 hashes remain retrievable from the v1.2.0 tag and from the archive deposited
-under version DOI 10.5281/zenodo.22224272. Concept DOI 10.5281/zenodo.22224271 resolves
-to all versions.
+under version DOI 10.5281/zenodo.22224272. Citations should use concept DOI
+10.5281/zenodo.22224271, which resolves to all versions and always to the latest, so it
+never requires updating when a new version is deposited.
 
 ## Provenance and state
 

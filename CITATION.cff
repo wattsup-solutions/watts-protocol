@@ -12,11 +12,14 @@ authors:
 license: Apache-2.0
 url: "https://protocol.wattsupsolutions.com"
 repository-code: "https://github.com/wattsup-solutions/watts-protocol"
-doi: "10.5281/zenodo.22224272"
+doi: "10.5281/zenodo.22224271"
 identifiers:
   - type: doi
     value: "10.5281/zenodo.22224271"
-    description: "Concept DOI resolving to all versions of Watts-Protocol™."
+    description: "Concept DOI. Resolves to all versions and always to the latest."
+  - type: doi
+    value: "10.5281/zenodo.22224272"
+    description: "Version DOI for v1.2.0."
 abstract: "A context governance and continuity framework for capturing, curating, transporting, and restoring durable working state across human-AI and AI-mediated collaboration."
 keywords:
   - context governance

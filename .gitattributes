@@ -1,0 +1,9 @@
+# Default: normalize text to LF in the repository.
+* text=auto
+
+# Protocol training JSON ships with CRLF for Windows Notepad readability.
+# These files are SHA-256 hashed in docs/attribution-and-provenance.md,
+# so their bytes must never be rewritten by line-ending conversion.
+examples/Watts_Protocol_Training_v1.2.json -text
+examples/Watts_Protocol_Training_v1.2_minified.json -text
+src/Wp.Cli/Assets/Watts_Protocol_Training_v1.2.json -text

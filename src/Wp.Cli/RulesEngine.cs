@@ -28,6 +28,45 @@ public sealed partial class RulesEngine
         "open_questions", "risks", "next_actions",
     ];
 
+    /// <summary>
+    /// Sections whose items record a settled position rather than an empirical claim. For these,
+    /// an explicit <c>authority</c> marker is itself the evidentiary basis, so it satisfies the
+    /// evidence-state requirement. A settled decision is grounded by who settled it.
+    /// </summary>
+    private static readonly string[] AuthorityGroundedSections =
+    [
+        "decisions_made", "constraints", "next_actions",
+    ];
+
+    /// <summary>
+    /// Sections exempt from <c>missing-authority-marker</c>. An open question has, by definition,
+    /// no source, approval, or verification behind it; requiring one makes the rule unsatisfiable.
+    /// </summary>
+    private static readonly string[] AuthorityExemptSections =
+    [
+        "open_questions",
+    ];
+
+    /// <summary>
+    /// Minimum shared content terms before a restatement is even considered for the
+    /// low-confidence-promotion rule.
+    /// </summary>
+    private const int MinSharedContentTerms = 2;
+
+    /// <summary>
+    /// Minimum share of the smaller item's content terms that must overlap. Incidental vocabulary
+    /// overlap between two long, unrelated statements scores low here; a genuine restatement of
+    /// the same claim scores near 1.0. This ratio, not the raw count, is what separates them.
+    /// </summary>
+    private const double MinTopicOverlapRatio = 0.6;
+
+    /// <summary>
+    /// Overlap ratio required when the only assertive signal is a bare copula (is/are/was/were).
+    /// Copulas appear in most well-formed sentences, so they are weak evidence of promotion and
+    /// demand near-total topical agreement before a finding is raised.
+    /// </summary>
+    private const double MinCopulaOverlapRatio = 0.75;
+
     private static readonly HashSet<string> AuthorityFields = new(StringComparer.OrdinalIgnoreCase)
     {
         "authority", "source", "approved_by", "approval", "verification_status", "evidence_basis",
@@ -143,7 +182,12 @@ public sealed partial class RulesEngine
                      ActiveCollections.Contains(item.Section, StringComparer.OrdinalIgnoreCase) &&
                      !string.IsNullOrWhiteSpace(item.Text)))
         {
-            if (!item.HasEvidenceState)
+            // In authority-grounded sections a settled decision's evidentiary basis is its
+            // authority, so an explicit authority marker satisfies evidence-state on its own.
+            var authorityGrounds = AuthorityGroundedSections.Contains(item.Section, StringComparer.OrdinalIgnoreCase) &&
+                item.HasAuthorityProperty;
+
+            if (!item.HasEvidenceState && !authorityGrounds)
             {
                 results.Add(new RuleFinding(
                     FindingSeverity.Warning,
@@ -152,7 +196,9 @@ public sealed partial class RulesEngine
                     item.Location));
             }
 
-            if (!item.HasAuthorityMarker)
+            // open_questions cannot satisfy this rule by definition, so it is not applied there.
+            if (!item.HasAuthorityMarker &&
+                !AuthorityExemptSections.Contains(item.Section, StringComparer.OrdinalIgnoreCase))
             {
                 results.Add(new RuleFinding(
                     FindingSeverity.Warning,
@@ -167,28 +213,78 @@ public sealed partial class RulesEngine
         IReadOnlyCollection<ContextItem> items,
         ICollection<RuleFinding> results)
     {
-        var hedged = items.Where(item => HedgeRegex().IsMatch(item.Text)).ToList();
-        var assertive = items.Where(item => !HedgeRegex().IsMatch(item.Text) && AssertiveRegex().IsMatch(item.Text)).ToList();
+        // Only governed state can be promoted. Scalar header fields such as session_name,
+        // project_name, and active_objective state intent, not evidence: an objective that names
+        // the same subject as a hypothesis is not a restatement of it. v1.2.0 scanned them and
+        // reported active_objective as the promotion site four times on a single capsule.
+        var governed = items
+            .Where(item => ActiveCollections.Contains(item.Section, StringComparer.OrdinalIgnoreCase))
+            .ToList();
+
+        // Match on the claim's prose only. Metadata keys and label values are not the claim.
+        var hedged = governed.Where(item => HedgeRegex().IsMatch(item.ClaimText)).ToList();
+
+        // A restatement that carries its own recorded validation is not an unvalidated promotion,
+        // which is precisely what this rule reports. Excluding those removes the largest source of
+        // false positives on well-labelled capsules.
+        var assertive = governed
+            .Where(item => !HedgeRegex().IsMatch(item.ClaimText) && !item.HasRecordedValidation)
+            .Select(item => (Item: item, Strong: StrongAssertionRegex().IsMatch(item.ClaimText), Copula: CopulaRegex().IsMatch(item.ClaimText)))
+            .Where(candidate => candidate.Strong || candidate.Copula)
+            .ToList();
 
         foreach (var tentative in hedged)
         {
-            var tentativeTerms = ContentTerms(tentative.Text);
-            if (!tentativeTerms.Any())
+            var tentativeTerms = ContentTerms(tentative.ClaimText).ToList();
+            if (tentativeTerms.Count == 0)
             {
                 continue;
             }
 
-            var promotion = assertive.FirstOrDefault(item =>
-                item.Location != tentative.Location &&
-                tentativeTerms.Intersect(ContentTerms(item.Text), StringComparer.OrdinalIgnoreCase).Count() >= 2);
+            (ContextItem Item, double Ratio, int Shared)? best = null;
 
-            if (promotion is not null)
+            foreach (var candidate in assertive)
             {
+                if (candidate.Item.Location == tentative.Location)
+                {
+                    continue;
+                }
+
+                var candidateTerms = ContentTerms(candidate.Item.ClaimText).ToList();
+                if (candidateTerms.Count == 0)
+                {
+                    continue;
+                }
+
+                var shared = tentativeTerms
+                    .Intersect(candidateTerms, StringComparer.OrdinalIgnoreCase)
+                    .Count();
+
+                if (shared < MinSharedContentTerms)
+                {
+                    continue;
+                }
+
+                // Measure against the smaller item so a short restatement of a long hedged claim
+                // is still caught, while two long statements sharing a few words are not.
+                var ratio = (double)shared / Math.Min(tentativeTerms.Count, candidateTerms.Count);
+                var required = candidate.Strong ? MinTopicOverlapRatio : MinCopulaOverlapRatio;
+
+                if (ratio >= required && (best is null || ratio > best.Value.Ratio))
+                {
+                    best = (candidate.Item, ratio, shared);
+                }
+            }
+
+            if (best is not null)
+            {
+                // Location names the hedged item that is at risk of being promoted; the message
+                // names the assertive restatement. The v1.2.0 build had these reversed.
                 results.Add(new RuleFinding(
                     FindingSeverity.Finding,
                     "low-confidence-state-promotion",
-                    $"Hedged state at {tentative.Location} appears to be restated as fact without recorded validation.",
-                    promotion.Location));
+                    $"Hedged state appears to be restated as fact at {best.Value.Item.Location} without recorded validation.",
+                    tentative.Location));
             }
         }
     }
@@ -232,8 +328,15 @@ public sealed partial class RulesEngine
     [GeneratedRegex(@"\b(maybe|perhaps|appears?|seems?|likely|unlikely|might|could|possibly|assum(?:e|ed|ption)|hypothes(?:is|ize|ized)|preliminary|tentative)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex HedgeRegex();
 
-    [GeneratedRegex(@"\b(is|are|was|were|will be|confirmed|proven|definitely)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
-    private static partial Regex AssertiveRegex();
+    // Explicit assertions of settled truth. These are strong evidence that a claim is being
+    // presented as established, so they clear a lower topical-overlap bar.
+    [GeneratedRegex(@"\b(will be|confirmed|confirms|proven|proves|verified|validated|established|demonstrated|definitely|certainly|conclusively|now known)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex StrongAssertionRegex();
+
+    // Bare copulas. Present in most declarative sentences, so on their own they are weak evidence
+    // of promotion and are held to a much higher topical-overlap bar.
+    [GeneratedRegex(@"\b(is|are|was|were)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex CopulaRegex();
 
     [GeneratedRegex(@"[A-Za-z][A-Za-z0-9_-]*", RegexOptions.CultureInvariant)]
     private static partial Regex WordRegex();
@@ -259,10 +362,55 @@ public sealed partial class RulesEngine
 
         public string Text { get; }
 
+        /// <summary>
+        /// The claim's own prose, without its metadata. <see cref="Text"/> serialises a structured
+        /// item to JSON, so every labelled item shares the tokens "text", "state_type", "source",
+        /// and "confidence" with every other one. Comparing those as content terms is what made
+        /// the promotion rule fire on unrelated statements in v1.2.0.
+        /// </summary>
+        public string ClaimText =>
+            Node is JsonObject obj &&
+            obj.TryGetPropertyValue("text", out var value) &&
+            value is JsonValue scalar &&
+            scalar.TryGetValue<string>(out var claim)
+                ? claim
+                : Text;
+
         public bool HasEvidenceState => HasAnyProperty("state_type", "evidence_state", "confidence", "verification_status", "evidence_basis") ||
             EvidenceMarkerRegex().IsMatch(Text);
 
         public bool HasAuthorityMarker => HasAnyProperty(AuthorityFields.ToArray()) || AuthorityMarkerRegex().IsMatch(Text);
+
+        /// <summary>Whether the item carries an explicit <c>authority</c> property.</summary>
+        public bool HasAuthorityProperty => HasAnyProperty("authority");
+
+        /// <summary>
+        /// Whether the item records that its claim was actually validated, as opposed to merely
+        /// being labelled. Used to exclude already-validated statements from the
+        /// low-confidence-promotion rule.
+        /// </summary>
+        public bool HasRecordedValidation
+        {
+            get
+            {
+                if (Node is not JsonObject obj)
+                {
+                    return false;
+                }
+
+                if (obj.ContainsKey("verification_status") || obj.ContainsKey("evidence_basis"))
+                {
+                    return true;
+                }
+
+                var hasProvenance = AuthorityFields.Any(obj.ContainsKey);
+                return hasProvenance &&
+                    obj.TryGetPropertyValue("state_type", out var stateType) &&
+                    stateType is JsonValue value &&
+                    value.TryGetValue<string>(out var text) &&
+                    ValidatedStateTypeRegex().IsMatch(text);
+            }
+        }
 
         public static ContextItem Create(string location, string section, JsonNode? node) =>
             new(location, section, node, TextOf(node));
@@ -287,5 +435,8 @@ public sealed partial class RulesEngine
 
         [GeneratedRegex(@"\b(source|authority|approved|verified by|evidence basis|owner)\s*[:=]", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
         private static partial Regex AuthorityMarkerRegex();
+
+        [GeneratedRegex(@"^(verified|confirmed|observed|measured|source_document|settled)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+        private static partial Regex ValidatedStateTypeRegex();
     }
 }

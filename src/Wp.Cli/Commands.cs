@@ -1,6 +1,7 @@
 // Licensed under the Apache License, Version 2.0.
 // Copyright 2026 WattsUp Solutions, Inc.
 
+using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -295,6 +296,10 @@ public sealed class CheckCommand : Command<CheckCommand.Settings>
         [CommandOption("--format <FORMAT>")]
         [DefaultValue("table")]
         public string Format { get; init; } = "table";
+
+        /// <summary>Lists every affected item instead of one grouped row per rule.</summary>
+        [CommandOption("-v|--verbose")]
+        public bool Verbose { get; init; }
     }
 
     /// <inheritdoc />
@@ -324,23 +329,17 @@ public sealed class CheckCommand : Command<CheckCommand.Settings>
             }
             else if (string.Equals(settings.Format, "table", StringComparison.OrdinalIgnoreCase))
             {
-                var table = new Table().AddColumn("Severity").AddColumn("Rule").AddColumn("Location").AddColumn("Message");
-                foreach (var finding in findings)
-                {
-                    table.AddRow(
-                        finding.Severity == FindingSeverity.Finding ? "[red]finding[/]" : "[yellow]warning[/]",
-                        Markup.Escape(finding.Rule),
-                        Markup.Escape(finding.Location),
-                        Markup.Escape(finding.Message));
-                }
-
                 if (findings.Count == 0)
                 {
                     AnsiConsole.MarkupLine("[green]No context-integrity risks found.[/]");
                 }
+                else if (settings.Verbose)
+                {
+                    WriteItemTable(findings);
+                }
                 else
                 {
-                    AnsiConsole.Write(table);
+                    WriteGroupedTable(findings);
                 }
             }
             else
@@ -358,6 +357,91 @@ public sealed class CheckCommand : Command<CheckCommand.Settings>
             AnsiConsole.MarkupLine($"[red]Check failed:[/] {Markup.Escape(exception.Message)}");
             return 2;
         }
+    }
+
+    private static string Severity(FindingSeverity severity) =>
+        severity == FindingSeverity.Finding ? "[red]finding[/]" : "[yellow]warning[/]";
+
+    /// <summary>Strips the item index from a location, leaving the capsule section name.</summary>
+    private static string SectionOf(string location)
+    {
+        var bracket = location.IndexOf('[');
+        return bracket < 0 ? location : location[..bracket];
+    }
+
+    /// <summary>
+    /// One row per rule, with how many items tripped it and which sections they live in. A capsule
+    /// with three distinct problems reads as three rows rather than one row per affected item.
+    /// </summary>
+    private static void WriteGroupedTable(IReadOnlyList<RuleFinding> findings)
+    {
+        var groups = findings
+            .GroupBy(finding => (finding.Severity, finding.Rule))
+            .OrderByDescending(group => group.Key.Severity == FindingSeverity.Finding)
+            .ThenByDescending(group => group.Count())
+            .ThenBy(group => group.Key.Rule, StringComparer.Ordinal)
+            .ToList();
+
+        // Rule names and counts are never wrapped: a rule identifier split across lines is not
+        // greppable and is the first thing a reader scans for.
+        var table = new Table()
+            .AddColumn(new TableColumn("Severity").NoWrap())
+            .AddColumn(new TableColumn("Rule").NoWrap())
+            .AddColumn(new TableColumn("Items").RightAligned().NoWrap())
+            .AddColumn("Sections")
+            .AddColumn("Message");
+
+        foreach (var group in groups)
+        {
+            var sections = group
+                .Select(finding => SectionOf(finding.Location))
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(section => section, StringComparer.Ordinal)
+                .ToList();
+
+            var rendered = sections.Count > 4
+                ? string.Join(", ", sections.Take(4)) + $", +{sections.Count - 4} more"
+                : string.Join(", ", sections);
+
+            table.AddRow(
+                Severity(group.Key.Severity),
+                Markup.Escape(group.Key.Rule),
+                group.Count().ToString(CultureInfo.InvariantCulture),
+                Markup.Escape(rendered),
+                Markup.Escape(group.First().Message));
+        }
+
+        AnsiConsole.Write(table);
+
+        var findingCount = findings.Count(finding => finding.Severity == FindingSeverity.Finding);
+        var warningCount = findings.Count - findingCount;
+        AnsiConsole.MarkupLine(
+            $"[grey]{groups.Count} rule(s) tripped across {findings.Count} item(s): " +
+            $"{findingCount} finding(s), {warningCount} warning(s). " +
+            $"Re-run with --verbose for per-item locations.[/]");
+    }
+
+    /// <summary>One row per affected item, for --verbose.</summary>
+    private static void WriteItemTable(IReadOnlyList<RuleFinding> findings)
+    {
+        var table = new Table()
+            .AddColumn(new TableColumn("Severity").NoWrap())
+            .AddColumn(new TableColumn("Rule").NoWrap())
+            .AddColumn(new TableColumn("Location").NoWrap())
+            .AddColumn("Message");
+        foreach (var finding in findings
+                     .OrderByDescending(finding => finding.Severity == FindingSeverity.Finding)
+                     .ThenBy(finding => finding.Rule, StringComparer.Ordinal)
+                     .ThenBy(finding => finding.Location, StringComparer.Ordinal))
+        {
+            table.AddRow(
+                Severity(finding.Severity),
+                Markup.Escape(finding.Rule),
+                Markup.Escape(finding.Location),
+                Markup.Escape(finding.Message));
+        }
+
+        AnsiConsole.Write(table);
     }
 }
 

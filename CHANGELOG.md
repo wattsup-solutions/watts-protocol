@@ -2,6 +2,54 @@
 
 All notable changes to Watts-Protocol™ are documented in this file.
 
+## v1.2.1 — Rules Engine Corrections
+
+**Tagline:** "Trust what the checker tells you."
+
+A patch release. No normative protocol behavior changed; the specification, the training
+files, and the capsule schema are identical to v1.2. Every fix below corrects the
+reference CLI implementation, and all were found by using the tool on real capsules
+rather than by review.
+
+**First-run experience.** The solution file is now at the repository root, so a bare
+`dotnet build` succeeds on a fresh clone; previously it failed with MSB1003. Console
+output is explicitly UTF-8, so the trademark symbol renders correctly on consoles whose
+default code page is not UTF-8.
+
+**Rules engine correctness.** A single well-labelled capsule previously produced 29
+findings for 3 distinct problems, none of them real. Three causes were corrected:
+
+- In `decisions_made`, `constraints`, and `next_actions`, an authority marker is the
+  evidentiary basis for the item, and now satisfies the evidence-state rule on its own
+  rather than being reported alongside it.
+- `open_questions` is exempt from the authority-marker rule. An open question has no
+  source, approval, or verification by definition, so the rule was unsatisfiable there.
+- The low-confidence-state-promotion detector no longer compares item metadata as claim
+  content. A structured item's text is its serialised form, so every labelled item
+  shared the field names `text`, `state_type`, `confidence`, and `source` with every
+  other one and cleared the overlap threshold on metadata alone. Detection now reads the
+  claim's prose only, distinguishes strong assertions from bare copulas with separate
+  overlap thresholds, exempts restatements that carry recorded validation, ignores scalar
+  header fields, and reports the finding against the hedged item rather than the
+  restatement.
+
+The stale-or-expired and superseded-item rules likewise required a passing mention of
+those terms in prose to be treated as a marking. Both now require an explicit marking
+construction or a dated expiry, so a capsule that discusses replacing outdated material
+is no longer reported as outdated itself.
+
+**Reporting.** `wp check` groups findings by rule, with item counts and affected
+sections, and `--verbose` restores per-item rows. JSON output is unchanged, so existing
+automation continues to work.
+
+**Schema note.** The `constraints` field was introduced in the v1.2 capsule schema and is
+documented in the specification and both training files. Capsule templates predating v1.2
+do not include it; this is expected and requires no change to the field set.
+
+The bundled example capsule now passes the tool's own `wp check` with no findings. Test
+coverage rose from 12 to 35 cases, including the capsule that reproduced the reporting
+failure, retained as a fixture.
+
 ## v1.2 — Operational Compression and Context Portability
 
 **Tagline:** “Load only what you need.”

@@ -41,3 +41,6 @@ coverage/
 # Logs and scratch
 *.log
 *.tmp
+
+# Release output
+dist/
